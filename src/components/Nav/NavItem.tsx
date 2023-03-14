@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 type Props = {
-    name: string
+    name: String
 }
 export const NavItem = ({name}: Props) => {
     return (
