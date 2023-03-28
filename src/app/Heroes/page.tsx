@@ -1,23 +1,21 @@
 import Image from "next/image";
-import {getHeroes, parseHeroImage} from "@/service/HeroService/HeroService";
+import {filterHeroes, getHeroes, parseHeroImage} from "@/service/HeroService/HeroService";
+import {Grid} from "@/components/Grid/Grid";
+import {HeroImage} from "@/components/Image/HeroImage";
+import {Hero} from "@/Models/Hero";
+import {HeroCategoryGrid} from "@/components/Category/HeroCategoryGrid";
 
-type Hero = {
-    id: String,
-    name: String,
-    localizedName: String,
-    primaryAttr: String,
-    attackType: String,
-    roles: [String],
-    legs: Number
-}
 export default async function Heroes(){
-    const data = await getHeroes();
-    console.log(data);
+    const data: Hero[] = await getHeroes();
+    const heroes = await filterHeroes(data);
+
     return (
-      <div>
-          {data.map((hero: Hero, index: number) => {
-              return <Image src={parseHeroImage(hero.name)} width="100" height="100"/>;
-          })}
+      <div className="flex justify-center items-center m-8 flex">
+          <div className="flex flex-col justify-center items-center p-8 bg-light-navy-blue rounded-lg shadow-2xl">
+              <HeroCategoryGrid attribute={"Strength"} data={heroes.get("Str")}/>
+              <HeroCategoryGrid attribute={"Agility"} data={heroes.get("Agi")}/>
+              <HeroCategoryGrid attribute={"Intelligence"} data={heroes.get("Int")}/>
+          </div>
       </div>
     );
 }
