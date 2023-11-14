@@ -1,18 +1,18 @@
-import type { Config } from "drizzle-kit";
-import * as dotenv from "dotenv";
+import type {Config} from "drizzle-kit"
+import * as dotenv from 'dotenv'
 
-dotenv.config();
+dotenv.config({
+    path: __dirname + '/.env'
+});
+
+if(!process.env.DATABASE_URL){
+    throw new Error("env var missing")
+}
 
 export default {
-    schema: "./src/server/schema/*",
-    out: "./drizzle",
-    driver: `mysql2`,
-    dbCredentials: {
-        host: process.env.DATABASE_HOST,
-        port: "1234",
-        user: process.env.DATABASE_USERNAME,
-        password: process.env.DATABASE_PASSWORD,
-        database: process.env.DATABASE_NAME,
-    },
-    tablesFilter: ["dota_ps_*"],
+    schema: "./src/db/schema.ts",
+    driver: "mysql2",
+	dbCredentials: {
+		uri: process.env.DATABASE_URL,
+	}
 } satisfies Config;
