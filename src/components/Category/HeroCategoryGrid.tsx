@@ -1,6 +1,7 @@
 import {Grid} from "@/components/Grid/Grid";
+import Link from 'next/link'
 import {Hero} from "@/Models/Hero";
-import {HeroImage} from "@/components/Image/HeroImage";
+import {DotaImage} from "@/components/Image/DotaImage";
 import {parseHeroImage} from "@/service/HeroService/HeroService";
 
 type Props = {
@@ -17,7 +18,9 @@ export const HeroCategoryGrid = ({attribute, data}: Props) => {
                     let srcLink: string = parseHeroImage(hero.name, 'lg')
                     let heroName: string = hero.name.toString()
 
-                    return <HeroImage key={index} src={srcLink} altDesc={`Dota Hero: ${heroName}`} id={id}/>;
+                    return (<Link key={index} href={`Heroes/${id}`}>
+                            <DotaImage src={srcLink} altDesc={`Dota Hero: ${heroName}`} width={100} height={100}/>;
+                    </Link>);
                 }): <div/>}
             </Grid>
         </div>

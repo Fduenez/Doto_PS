@@ -1,16 +1,21 @@
 import {Hero} from "@/Models/Hero";
-import 'dotenv/config'
-import { drizzle } from 'drizzle-orm/planetscale-serverless'
-import { connect } from '@planetscale/database'
-import {hero_stats, planetScaleTable} from "@/server/schema/schema";
-import {HeroStat} from "@/Models/HeroStat";
-import * as process from "process";
+import {HeroAbilities} from "@/Models/HeroAbilities";
+import {Abilities} from "@/Models/Abilities";
+import item_ids from "../../../constants/item_ids.json"
+import items from "../../../constants/items.json"
 
-const BASE_HERO_IMAGE_URL = "http://cdn.dota2.com/apps/dota2/images/heroes"
+
+
+const BASE_HERO_IMAGE_URL: string = "http://cdn.dota2.com/apps/dota2/images/heroes"
+const BASE_IMAGE_URL: string = "http://cdn.dota2.com/"
 const INTELLIGENCE = 'Int';
 const STRENGTH = 'Str';
 const AGILITY = 'Agi';
 const ALL = "All"
+const ABILITIES_URL="abilities"
+const HERO_ABILITIES_URL="hero_abilities"
+const BASE_HEALTH: number = 120;
+const BASE_MANA: number = 75
 
 export const getHeroes = async () => {
     //fetches all heros from open dota api
@@ -24,8 +29,25 @@ export const parseHeroImage = (heroName: String, imageType: String): string => {
     const newHeroName: string = heroName.substring(14)
     //multiple types of images: sb, lg, full
     const heroImageUrl: string = `${BASE_HERO_IMAGE_URL}/${newHeroName}_${imageType}.png`;
+
     return heroImageUrl;
 };
+
+export const parseAbilityImage = (ability: String): string => {
+    //multiple types of images: sb, lg, full
+    const abilityImageUrl: string = `${BASE_IMAGE_URL}/${ability}`;
+
+    return abilityImageUrl;
+};
+
+export const parseItemImage = (item_id: number): string => {
+    const id: string = item_id.toString();
+    const itemName = item_ids[id as keyof typeof item_ids]
+    const item: any = items[itemName as keyof typeof items];
+    const image: string = item.img;
+    const itemImageUrl: string = `${BASE_IMAGE_URL}/${image}`
+    return itemImageUrl;
+}
 
 export const filterHeroes = async (heroes: Hero[]) => {
     const heroMap = new Map<string, Hero[]>([
@@ -58,83 +80,39 @@ export const filterHeroes = async (heroes: Hero[]) => {
     return heroMap;
 }
 
-export const getHeroStats = async () => {
-    const data = await fetch("https://api.opendota.com/api/heroStats");
-    const heroStats:any = await data.json();
+export const getHeroAbilities = async(heroName: string) => {
+    const response = await fetch(`https://api.opendota.com/api/constants/${HERO_ABILITIES_URL}`);
+    const data: {[key:string]: HeroAbilities} = await response.json();
+    const map: Map<string, HeroAbilities> = new Map<string, HeroAbilities>(Object.entries(data));
+    const abilities = map.has(heroName) ? map.get(heroName)?.abilities : [""];
+    const heroAbilities: Abilities[] = await getAbilityDescriptions(abilities);
+    return heroAbilities;
+};
 
-    const connection = connect({
-        host: process.env.DATABASE_HOST,
-        username: process.env.DATABASE_USERNAME,
-        password: process.env.DATABASE_PASSWORD
-    })
+const getAbilityDescriptions = async(heroAbility: string[] | undefined)=> {
+    if(heroAbility === undefined){
+        return [];
+    }
+    try{
+        const response = await fetch(`https://api.opendota.com/api/constants/${ABILITIES_URL}`);
+        const data: {[key: string]: Abilities} = await response.json();
+        const map: Map<string, Abilities> = new Map<string, Abilities>(Object.entries(data));
+        const filteredAbilities = heroAbility.filter(ability => ability!= "generic_hidden");
+        const abilities = filteredAbilities.map((ability: string) => {
+            const abilityInfo: Abilities | any = map.has(ability) ? map.get(ability): {};
+            return abilityInfo;
+        })
 
-    const db = drizzle(connection.);
+        return abilities;
 
-    type NewHero = typeof hero_stats.$inferInsert;
+    }
+    catch(error: any){
+        throw new Error(error.toString());
+    }
 
 
-    heroStats.map(async (heroStat:any) => {
-        let hero= new HeroStat(
-            heroStat.id,
-            heroStat.name,
-            heroStat.localized_name,
-            heroStat.primary_attr,
-            heroStat.attack_type,
-            heroStat.roles,
-            heroStat.img,
-            heroStat.icon,
-            heroStat.base_health,
-            heroStat.base_health_regen,
-            heroStat.base_mana,
-            heroStat.base_mana_regen,
-            heroStat.base_armor,
-            heroStat.base_mr,
-            heroStat.base_attack_min,
-            heroStat.base_attack_max,
-            heroStat.base_str,
-            heroStat.base_agi,
-            heroStat.base_int,
-            heroStat.str_gain,
-            heroStat.agi_gain,
-            heroStat.int_gain,
-            heroStat.attack_range,
-            heroStat.projectile_speed,
-            heroStat.attack_rate,
-            heroStat.base_attack_time,
-            heroStat.attack_point,
-            heroStat.move_speed,
-            heroStat.turn_rate,
-            heroStat.cm_enabled,
-            heroStat.legs,
-            heroStat.day_vision,
-            heroStat.night_vision,
-            heroStat.hero_id,
-            heroStat.turbo_picks,
-            heroStat.turbo_wins,
-            heroStat.pro_ban,
-            heroStat.pro_win,
-            heroStat.pro_pick,
-            heroStat['1_pick'],
-            heroStat['1_win'],
-            heroStat['2_pick'],
-            heroStat['2_win'],
-            heroStat['3_pick'],
-            heroStat['3_win'],
-            heroStat['4_pick'],
-            heroStat['4_win'],
-            heroStat['5_pick'],
-            heroStat['5_win'],
-            heroStat['6_pick'],
-            heroStat['6_win'],
-            heroStat['7_pick'],
-            heroStat['7_win'],
-            heroStat['8_pick'],
-            heroStat['8_win'],
-            heroStat.null_pick,
-            heroStat.null_win);
-        await db.insert(hero_stats).values(
-            heroStat
-        )
-        });
-    return {name: "hi"};
+};
+
+export const getHeroHealth =(baseStr: number, lvl: number, strGain: number): number => {
+    return (baseStr + (lvl * strGain))* 22 + BASE_HEALTH;
 }

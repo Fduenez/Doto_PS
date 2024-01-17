@@ -1,13 +1,14 @@
-import {int, boolean, json, mysqlTableCreator, varchar} from "drizzle-orm/mysql-core";
+import {int, boolean, json, mysqlTableCreator, varchar, bigint, primaryKey} from "drizzle-orm/mysql-core";
 
 export const planetScaleTable = mysqlTableCreator((name) => `dota_ps_${name}`);
 export const hero_stats = planetScaleTable('hero_stats', {
     id: int('id').primaryKey().notNull(),
-    name: varchar('name', {length: 256}),
-    localized_name: varchar('name', {length: 256}),
-    primary_attr: varchar('primary_attr', { length: 256}),
+    name: varchar('name', {length: 256}).notNull(),
+    localized_name: varchar('localized_name', {length: 256}).notNull(),
+    primary_attr: varchar('primary_attr', { length: 256}).notNull(),
     attack_type: varchar('attack_type', { length: 256}),
     roles: json('roles').$type<string[]>(),
+    img: varchar('img', { length: 256}),
     icon: varchar('icon', { length: 256}),
     base_health: int('base_health'),
     base_health_regen: int('base_health_regen'),
@@ -40,22 +41,34 @@ export const hero_stats = planetScaleTable('hero_stats', {
     pro_ban: int('pro_ban'),
     pro_win: int('pro_win'),
     pro_pick: int('pro_pick'),
-    one_pick: int('1_pick'),
-    one_win: int('1_win'),
-    two_pick: int('2_pick'),
-    two_win: int('2_win'),
-    three_pick: int('3_pick'),
-    three_win: int('3_win'),
-    four_pick: int('4_pick'),
-    four_win: int('4_win'),
-    five_pick: int('5_pick'),
-    five_win: int('5_win'),
-    six_pick: int('6_pick'),
-    six_win: int('6_win'),
-    seven_pick: int('7_pick'),
-    seven_win: int('7_win'),
-    eight_pick: int('8_pick'),
-    eight_win: int('8_win'),
+    one_pick: int('one_pick'),
+    one_win: int('one_win'),
+    two_pick: int('two_pick'),
+    two_win: int('two_win'),
+    three_pick: int('three_pick'),
+    three_win: int('three_win'),
+    four_pick: int('four_pick'),
+    four_win: int('four_win'),
+    five_pick: int('five_pick'),
+    five_win: int('five_win'),
+    six_pick: int('six_pick'),
+    six_win: int('six_win'),
+    seven_pick: int('seven_pick'),
+    seven_win: int('seven_win'),
+    eight_pick: int('eight_pick'),
+    eight_win: int('eight_win'),
     null_pick: int('null_pick'),
     null_win: int('null_win')
 });
+
+export const hero_item_usages = planetScaleTable('hero_item_usages', {
+    hero_id: int('hero_id').notNull(),
+    item_id: int('item_id').notNull(),
+    item_name: varchar('item_name', {length: 256}).notNull(),
+    win_rate: bigint('win_rate', {mode: 'number'}).notNull(),
+    matches: bigint('matches', {mode: 'number'}).notNull()
+}, (table) => {
+    return {
+        pk: primaryKey({ columns: [table.hero_id, table.item_id] }),
+        pkWithCustomName: primaryKey({ name: 'hero_item_id', columns: [table.hero_id, table.item_id] }),
+    }});
