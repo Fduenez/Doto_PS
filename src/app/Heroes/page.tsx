@@ -15,6 +15,7 @@ export default async function Heroes(){
               <HeroCategoryGrid attribute={"Strength"} data={heroes.get("Str")}/>
               <HeroCategoryGrid attribute={"Agility"} data={heroes.get("Agi")}/>
               <HeroCategoryGrid attribute={"Intelligence"} data={heroes.get("Int")}/>
+              <HeroCategoryGrid attribute={"Universal"} data={heroes.get("All")}/>
           </div>
       </div>
     );
